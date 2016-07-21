@@ -152,6 +152,10 @@
 
                   b: google.maps.event.addListener(marker, 'mouseout', function() {
                     infowindow.close(map, this);
+                  }),
+                
+                  c: google.maps.event.addListener(marker, 'dblclick', function(e) {
+                    changeLocation(generateRandomPoint(e.latLng, 15));
                   })
                 };
 
@@ -174,6 +178,46 @@
           }
         });
       }
+      
+      var locMarker;
+      
+      function changeLocation(latLng) {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.open("GET", "http://localhost:8081/loc?lat=" + latLng.lat() + "&long=" + latLng.lng(), true);
+        xmlhttp.send();
+        
+        map.panTo(latLng);
+        
+        if (locMarker == undefined) {
+            locMarker = new google.maps.Marker({
+                position: latLng,
+                map: map,
+                animation: google.maps.Animation.DROP
+            });
+        } else {
+            locMarker.setPosition(latLng);
+        }
+      }
+      
+      function generateRandomPoint(center, radius) {
+        var x0 = center.lng();
+        var y0 = center.lat();
+        // Convert Radius from meters to degrees.
+        var rd = radius/111300;
+
+        var u = Math.random();
+        var v = Math.random();
+
+        var w = rd * Math.sqrt(u);
+        var t = 2 * Math.PI * v;
+        var x = w * Math.cos(t);
+        var y = w * Math.sin(t);
+
+        var xp = x/Math.cos(y0);
+
+        // Resulting point.
+        return new google.maps.LatLng({lat: y+y0, lng: xp+x0});
+      }
 
       data = {};
       map = null;
@@ -195,7 +239,13 @@
 
         map = new google.maps.Map(document.getElementById('map'), {
           center: {lat: 0, lng: 0},
-          zoom: 4
+          zoom: 4,
+          draggableCursor: 'default',
+          disableDoubleClickZoom: true
+        });
+        
+        map.addListener('dblclick', function(e) {
+          changeLocation(e.latLng);
         });
 
         var legend = document.createElement('div');

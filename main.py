@@ -5,6 +5,11 @@ import json
 import argparse
 import pokemon_pb2
 import time
+import threading
+import urlparse
+import SimpleHTTPServer
+import SocketServer
+import os
 
 from google.protobuf.internal import encoder
 
@@ -54,6 +59,8 @@ default_step = 0.001
 NUM_STEPS = 5
 DATA_FILE = 'data.json'
 DATA = []
+
+PORT = 8081
 
 def f2i(float):
   return struct.unpack('<Q', struct.pack('<d', float))[0]
@@ -344,6 +351,31 @@ def scan(api_endpoint, access_token, response, origin, pokemons):
         steps +=1
 
         print('[+] Scan: %0.1f %%' % (((steps + (pos * .25) - .25) / steplimit**2) * 100))
+        
+class MyHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        # Parse query data & params to find out what was passed
+        parsedParams = urlparse.urlparse(self.path)
+        queryParsed = urlparse.parse_qs(parsedParams.query)
+
+        # request is either for a file to be served up or our test
+        if parsedParams.path == "/loc":
+            self.processMyRequest(queryParsed)
+        else:
+            # Default to serve up a local file 
+            self.send_response(404)
+            self.end_headers()
+
+    def processMyRequest(self, query):
+        os.system("adb shell am startservice -a com.lexa.fakegps.START -e lat " + query['lat'][0] + " -e long " + query['long'][0])
+        
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Content-Type', 'text/plain')
+        self.end_headers()
+
+        self.wfile.write("done");
+        self.wfile.close();
 
 def main():
     write_data_to_file()
@@ -362,6 +394,12 @@ def main():
         print('[!] DEBUG mode on')
 
     set_location(args.location)
+    
+    httpd = SocketServer.TCPServer(("", PORT), MyHandler)
+    
+    t = threading.Thread(target=httpd.serve_forever)
+    t.daemon = True
+    t.start()
 
     access_token = login_ptc(args.username, args.password)
     if access_token is None:

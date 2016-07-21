@@ -1,7 +1,15 @@
-# Pokemon Go Maps
+# Pokemon Go Maps with Android Fake GPS Manipulation (Root Required)
 
 ## Instructions
 Generate a Google Maps API key here: https://console.developers.google.com/apis/credentials
+Install Android command line tools: https://developer.android.com/studio/index.html#downloads
+Install Fake GPS: https://play.google.com/store/apps/details?id=com.lexa.fakegps
+Convert Fake GPS app to system app using: https://play.google.com/store/apps/details?id=de.j4velin.systemappmover
+Enable USB debugging on android
+
+Double clicking anywhere on the map will move you there instantly
+Double clicking any pokemon will move you to that pokemon
+Don't go too far very quickly or you will get soft banned
 
 **MAC/LINUX:**
 
